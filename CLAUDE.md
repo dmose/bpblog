@@ -9,6 +9,7 @@ This is a minimal static blog generator built with TypeScript. It converts Markd
 ## Package Manager
 
 This project uses **pnpm** (not npm). All dependency operations should use pnpm:
+
 - `pnpm install` - Install dependencies
 - `pnpm add <package>` - Add a new dependency
 - `pnpm run <script>` - Run package scripts
@@ -85,7 +86,35 @@ The filename becomes the slug (URL): `posts/2024-01-15-hello-world.md` → `docs
 ## Linting
 
 Uses oxlint (fast Rust-based linter):
+
 - Correctness rules set to error
 - Suspicious patterns set to warn
 - TypeScript plugin enabled
 - Configuration in `.oxlintrc.json`
+
+## Code Formatting
+
+Uses Prettier for consistent code formatting across all file types:
+
+### Configuration
+
+- Configuration file: `.prettierrc`
+- Style: 2-space indentation, double quotes, semicolons, trailing commas
+- Formats: TypeScript (`.ts`), Markdown (`.md`), HTML (`.html`), JSON (`.json`)
+
+### Format Scripts
+
+- `pnpm run format` - Format all files in the project
+- `pnpm run format:check` - Check if files are formatted (used in CI)
+
+### Pre-Commit Hook
+
+The project uses husky + lint-staged to automatically format files before committing:
+
+- Staged files are automatically formatted with Prettier
+- TypeScript files also run through `oxlint --fix`
+- Hook is defined in `.husky/pre-commit`
+
+### CI Integration
+
+GitHub Actions workflow (`.github/workflows/format-check.yml`) runs on push and pull requests to ensure all code is properly formatted. The workflow will fail if any files don't match Prettier's formatting rules.
