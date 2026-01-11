@@ -1,0 +1,12 @@
+# Generated output
+docs/
+dist/
+
+# Dependencies
+node_modules/
+
+# Lock files
+pnpm-lock.yaml
+
+# Git
+.git/
