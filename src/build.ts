@@ -2,15 +2,16 @@ import fs from "fs/promises";
 import path from "path";
 import matter from "gray-matter";
 import { marked } from "marked";
+import { fileURLToPath } from "url";
 
-interface PostMeta {
+export interface PostMeta {
   title: string;
   date: Date;
   tags?: string[];
   draft?: boolean;
 }
 
-interface Post {
+export interface Post {
   slug: string;
   meta: PostMeta;
   content: string;
@@ -25,23 +26,35 @@ async function readTemplate(name: string): Promise<string> {
   return fs.readFile(path.join(TEMPLATES_DIR, `${name}.html`), "utf-8");
 }
 
+export async function parsePost(
+  filename: string,
+  fileContent: string
+): Promise<Post | null> {
+  if (!filename.endsWith(".md")) return null;
+  const { data, content: markdown } = matter(fileContent);
+  const meta = data as PostMeta;
+  const slug = filename.replace(".md", "");
+  const html = await marked(markdown);
+  return { slug, meta, content: markdown, html };
+}
+
+export function filterPostsForIndex(posts: Post[]): Post[] {
+  return posts
+    .filter((post) => !post.meta.draft)
+    .sort(
+      (a, b) =>
+        new Date(b.meta.date).getTime() - new Date(a.meta.date).getTime()
+    );
+}
+
 async function getPosts(): Promise<Post[]> {
   const files = await fs.readdir(POSTS_DIR);
   const posts: Post[] = [];
 
   for (const file of files) {
-    if (!file.endsWith(".md")) continue;
-
     const content = await fs.readFile(path.join(POSTS_DIR, file), "utf-8");
-    const { data, content: markdown } = matter(content);
-    const meta = data as PostMeta;
-
-    if (meta.draft) continue;
-
-    const slug = file.replace(".md", "");
-    const html = await marked(markdown);
-
-    posts.push({ slug, meta, content: markdown, html });
+    const post = await parsePost(file, content);
+    if (post) posts.push(post);
   }
 
   return posts.sort(
@@ -105,15 +118,24 @@ async function build(): Promise<void> {
     readTemplate("post"),
   ]);
 
-  // Get and build posts
-  const posts = await getPosts();
-  console.log(`Found ${posts.length} posts`);
+  // Get all posts (including drafts)
+  const allPosts = await getPosts();
+  console.log(`Found ${allPosts.length} posts`);
 
-  await Promise.all(posts.map((post) => buildPost(post, postTemplate)));
-  await buildIndex(posts, indexTemplate);
+  // Build ALL posts (including drafts)
+  await Promise.all(allPosts.map((post) => buildPost(post, postTemplate)));
+
+  // Index shows only non-drafts
+  const indexPosts = filterPostsForIndex(allPosts);
+  console.log(`Index will show ${indexPosts.length} non-draft posts`);
+  await buildIndex(indexPosts, indexTemplate);
+
   await copyStyles();
 
   console.log("Build complete!");
 }
 
-build().catch(console.error);
+const isMainModule = process.argv[1] === fileURLToPath(import.meta.url);
+if (isMainModule) {
+  build().catch(console.error);
+}
