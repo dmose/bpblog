@@ -7,6 +7,8 @@
     "build": "tsc && node dist/build.js",
     "dev": "tsc --watch",
     "serve": "npx serve docs",
+    "test": "vitest",
+    "test:run": "vitest run",
     "lint": "oxlint src",
     "lint:fix": "oxlint src --fix",
     "format": "prettier --write .",
@@ -19,7 +21,8 @@
     "lint-staged": "^16.2.7",
     "oxlint": "^1.38.0",
     "prettier": "^3.7.4",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.17"
   },
   "dependencies": {
     "gray-matter": "^4.0.3",
