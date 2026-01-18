@@ -19,6 +19,8 @@ This project uses **pnpm** (not npm). All dependency operations should use pnpm:
 - `pnpm run build` - Compile TypeScript and generate static site (compiles to `dist/`, outputs to `docs/`)
 - `pnpm run dev` - Watch mode for TypeScript compilation (doesn't regenerate site)
 - `pnpm run serve` - Serve the `docs/` directory locally for preview
+- `pnpm test` - Run tests in watch mode
+- `pnpm run test:run` - Run tests once (CI mode)
 - `pnpm run lint` - Run oxlint on source files
 - `pnpm run lint:fix` - Run oxlint with auto-fix
 
@@ -30,7 +32,7 @@ The build process is a single-file script that:
 
 1. **Reads Markdown posts** from `posts/` directory
    - Parses YAML frontmatter using `gray-matter`
-   - Skips posts with `draft: true` in frontmatter
+   - Processes all posts including drafts (drafts are built as HTML but hidden from index)
    - Extracts metadata: `title`, `date`, `tags`, `draft`
 
 2. **Converts to HTML** using `marked` library
@@ -41,16 +43,25 @@ The build process is a single-file script that:
    - Templates in `templates/` use `{{variable}}` syntax
    - Post template: `{{title}}`, `{{date}}`, `{{content}}`
    - Index template: `{{posts}}`
-   - No template engine - just string `.replace()`
+   - No template engine - just string `.replaceAll()` to handle multiple variable occurrences
 
 4. **Outputs to `docs/`** directory
-   - Individual post pages: `docs/<slug>.html`
-   - Index page: `docs/index.html`
+   - Individual post pages: `docs/<slug>.html` (includes drafts for direct URL access)
+   - Index page: `docs/index.html` (filters out drafts from listing)
    - Copies `templates/styles.css` to `docs/styles.css`
+
+### Exported Functions for Testing
+
+The build script exports several functions for unit testing:
+
+- `parsePost(filename: string, fileContent: string): Promise<Post | null>` - Parses a markdown file into a Post object
+- `filterPostsForIndex(posts: Post[]): Post[]` - Filters out drafts and sorts posts by date (newest first)
+- `buildPost(post: Post, template: string, outputDir?: string): Promise<void>` - Builds a single post HTML file with optional output directory
 
 ### Directory Structure
 
 - `src/build.ts` - Single-file build script
+- `test/` - Vitest test files for build logic
 - `posts/` - Markdown files with YAML frontmatter
 - `templates/` - HTML templates and CSS
   - `index.html` - Homepage template
@@ -75,6 +86,8 @@ Markdown content here...
 ```
 
 The filename becomes the slug (URL): `posts/2024-01-15-hello-world.md` → `docs/2024-01-15-hello-world.html`
+
+**Draft Behavior**: Posts with `draft: true` are built as HTML files (accessible via direct URL) but filtered out from the homepage index listing. This allows previewing draft posts without exposing them in the main navigation.
 
 ## TypeScript Configuration
 
@@ -118,3 +131,37 @@ The project uses husky + lint-staged to automatically format files before commit
 ### CI Integration
 
 GitHub Actions workflow (`.github/workflows/format-check.yml`) runs on push and pull requests to ensure all code is properly formatted. The workflow will fail if any files don't match Prettier's formatting rules.
+
+## Testing
+
+The project uses Vitest for testing:
+
+### Configuration
+
+- Test framework: Vitest (fast, modern testing framework)
+- Configuration file: `vitest.config.ts`
+- Test directory: `test/`
+- Environment: Node.js
+
+### Test Coverage
+
+The test suite covers:
+
+- **Post parsing**: Verifying correct parsing of markdown files with YAML frontmatter
+- **Draft filtering**: Ensuring drafts are excluded from index but still built
+- **Template variable replacement**: Testing that `.replaceAll()` handles multiple occurrences of variables (e.g., `{{title}}` in both `<title>` and `<h1>` tags)
+- **Build integration**: End-to-end tests verifying complete build output
+
+### Running Tests
+
+- `pnpm test` - Run tests in watch mode (automatically reruns on file changes)
+- `pnpm run test:run` - Run tests once (useful for CI pipelines)
+
+### Test Structure
+
+Tests are organized following the TDD methodology:
+
+- Arrange-Act-Assert pattern
+- Isolated test output directories
+- Cleanup in beforeEach/afterEach hooks
+- Integration tests use actual build artifacts

@@ -5,11 +5,12 @@ A minimal static blog generator built with TypeScript. Converts Markdown posts w
 ## Features
 
 - Simple Markdown-based posts with YAML frontmatter
-- Draft support (exclude posts from build)
+- Draft support (builds HTML but hides from index for direct URL preview)
 - Automatic date sorting (newest first)
 - Minimal template system with `{{variable}}` syntax
 - GitHub Pages ready output
 - Automatic deployment via GitHub Actions
+- Comprehensive test coverage with Vitest
 
 ## Prerequisites
 
@@ -46,12 +47,12 @@ Your Markdown content here...
 
 ### Frontmatter Fields
 
-| Field   | Required | Description                         |
-| ------- | -------- | ----------------------------------- |
-| `title` | Yes      | Post title displayed on the page    |
-| `date`  | Yes      | Publication date (YYYY-MM-DD)       |
-| `tags`  | No       | Array of tags for categorization    |
-| `draft` | No       | Set to `true` to exclude from build |
+| Field   | Required | Description                                                       |
+| ------- | -------- | ----------------------------------------------------------------- |
+| `title` | Yes      | Post title displayed on the page                                  |
+| `date`  | Yes      | Publication date (YYYY-MM-DD)                                     |
+| `tags`  | No       | Array of tags for categorization                                  |
+| `draft` | No       | Set to `true` to hide from index (still accessible by direct URL) |
 
 ### URL Slugs
 
@@ -66,6 +67,8 @@ The filename becomes the URL slug:
 | `pnpm run build`        | Compile TypeScript and generate static site |
 | `pnpm run dev`          | Watch mode for TypeScript compilation       |
 | `pnpm run serve`        | Serve `docs/` directory locally             |
+| `pnpm test`             | Run tests in watch mode                     |
+| `pnpm run test:run`     | Run tests once (CI mode)                    |
 | `pnpm run lint`         | Run oxlint on source files                  |
 | `pnpm run lint:fix`     | Run oxlint with auto-fix                    |
 | `pnpm run format`       | Format all files with Prettier              |
@@ -76,6 +79,7 @@ The filename becomes the URL slug:
 ```
 ├── src/
 │   └── build.ts          # Build script
+├── test/                 # Vitest test files
 ├── posts/                # Markdown blog posts
 ├── templates/            # HTML templates and CSS
 │   ├── index.html        # Homepage template
@@ -100,6 +104,15 @@ Templates use simple `{{variable}}` replacement:
 - `{{posts}}` - List of article links
 
 ## Development
+
+### Testing
+
+The project uses [Vitest](https://vitest.dev/) as its testing framework:
+
+- **Test files**: Located in the `test/` directory
+- **Watch mode**: `pnpm test` runs tests continuously as you make changes
+- **CI mode**: `pnpm run test:run` runs tests once for CI pipelines
+- **Coverage**: Tests cover post parsing, draft filtering, template variable replacement, and build integration
 
 ### Code Quality
 
