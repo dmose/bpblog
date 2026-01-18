@@ -70,13 +70,17 @@ function formatDate(date: Date): string {
   });
 }
 
-async function buildPost(post: Post, template: string): Promise<void> {
+export async function buildPost(
+  post: Post,
+  template: string,
+  outputDir: string = OUTPUT_DIR
+): Promise<void> {
   const html = template
-    .replace("{{title}}", post.meta.title)
-    .replace("{{date}}", formatDate(post.meta.date))
-    .replace("{{content}}", post.html);
+    .replaceAll("{{title}}", post.meta.title)
+    .replaceAll("{{date}}", formatDate(post.meta.date))
+    .replaceAll("{{content}}", post.html);
 
-  await fs.writeFile(path.join(OUTPUT_DIR, `${post.slug}.html`), html);
+  await fs.writeFile(path.join(outputDir, `${post.slug}.html`), html);
 }
 
 async function buildIndex(posts: Post[], template: string): Promise<void> {
