@@ -13,6 +13,17 @@ const DEBOUNCE_MS = 300;
 const SERVE_PORT = 3000;
 const SERVE_URL = `http://localhost:${SERVE_PORT}`;
 
+// Common watcher configuration for reliable file watching on macOS
+// Note: ignoreInitial must be false with polling to discover existing files
+// Event handlers must be set up AFTER 'ready' event to avoid rebuilding on startup
+const WATCHER_CONFIG = {
+  persistent: true,
+  ignoreInitial: false,
+  usePolling: true,
+  interval: 100,
+  ignored: /(^|[/\\])\../, // ignore dotfiles
+} as const;
+
 async function recompileTypeScript(): Promise<void> {
   console.log("🔨 Recompiling TypeScript...");
   try {
@@ -101,37 +112,49 @@ async function startDevMode(): Promise<void> {
   // Start the server
   startServer();
 
-  // Watch TypeScript source files
-  const srcWatcher = chokidar.watch("src/**/*.ts", {
-    ignored: ["**/node_modules/**", "**/dist/**"],
-    persistent: true,
-    ignoreInitial: true,
+  // Watch TypeScript source files - watch directory, not glob pattern
+  const srcWatcher = chokidar.watch("src", {
+    ...WATCHER_CONFIG,
+    ignored: [/(^|[/\\])\.\./, "**/node_modules/**", "**/dist/**"],
   });
 
-  srcWatcher.on("change", (filePath) => {
-    scheduleRebuild(filePath, true);
+  srcWatcher.on("ready", () => {
+    srcWatcher.on("change", (filePath) => {
+      // Only rebuild for .ts files
+      if (filePath.endsWith(".ts")) {
+        scheduleRebuild(filePath, true);
+      }
+    });
   });
 
-  // Watch Markdown posts
-  const postsWatcher = chokidar.watch("posts/**/*.md", {
-    persistent: true,
-    ignoreInitial: true,
+  // Watch Markdown posts - watch directory, not glob pattern
+  const postsWatcher = chokidar.watch("posts", WATCHER_CONFIG);
+
+  const handlePostChange = (filePath: string) => {
+    // Only rebuild for .md files
+    if (filePath.endsWith(".md")) {
+      scheduleRebuild(filePath, false);
+    }
+  };
+
+  // Wait for ready event before listening to changes to avoid rebuilding on startup
+  postsWatcher.on("ready", () => {
+    // Now that initial scan is done, listen for changes
+    postsWatcher.on("change", handlePostChange);
+    postsWatcher.on("add", handlePostChange);
+    postsWatcher.on("unlink", handlePostChange);
   });
 
-  const handlePostChange = (filePath: string) =>
-    scheduleRebuild(filePath, false);
-  postsWatcher.on("change", handlePostChange);
-  postsWatcher.on("add", handlePostChange);
-  postsWatcher.on("unlink", handlePostChange);
+  // Watch templates and styles - watch directory, not glob pattern
+  const templatesWatcher = chokidar.watch("templates", WATCHER_CONFIG);
 
-  // Watch templates and styles
-  const templatesWatcher = chokidar.watch("templates/**/*.{html,css}", {
-    persistent: true,
-    ignoreInitial: true,
-  });
-
-  templatesWatcher.on("change", (filePath) => {
-    scheduleRebuild(filePath, false);
+  templatesWatcher.on("ready", () => {
+    templatesWatcher.on("change", (filePath) => {
+      // Only rebuild for .html and .css files
+      if (filePath.endsWith(".html") || filePath.endsWith(".css")) {
+        scheduleRebuild(filePath, false);
+      }
+    });
   });
 
   console.log("✨ Dev mode active. Press Ctrl+C to stop.\n");

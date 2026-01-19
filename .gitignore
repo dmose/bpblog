@@ -5,6 +5,9 @@ dist/
 # Build output
 docs/
 
+# Compiled test artifacts (tests run directly from TypeScript)
+test/**/*.js
+
 # macOS system files
 .DS_Store
 
