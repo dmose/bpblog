@@ -110,7 +110,7 @@ async function copyStyles(): Promise<void> {
   }
 }
 
-async function build(): Promise<void> {
+export async function build(): Promise<void> {
   console.log("Building site...");
 
   // Ensure output directory exists
