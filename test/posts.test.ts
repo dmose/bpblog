@@ -5,7 +5,7 @@ import {
   buildPost,
   Post,
 } from "../src/build.js";
-import { existsSync, mkdirSync, rmSync } from "fs";
+import { existsSync, mkdirSync, rmSync, copyFileSync } from "fs";
 import { readFileSync } from "fs";
 import { execSync } from "child_process";
 
@@ -239,21 +239,68 @@ describe("buildPost", () => {
 });
 
 describe("build integration", () => {
-  it("builds draft posts to HTML files", () => {
-    // Rebuild to ensure fresh output
-    execSync("pnpm run build", { stdio: "inherit" });
+  const DRAFT_FIXTURE = "test/fixtures/posts/test-draft-post.md";
+  const PUBLISHED_FIXTURE = "test/fixtures/posts/test-published-post.md";
+  const TEMP_DRAFT = "posts/test-draft-post.md";
+  const TEMP_PUBLISHED = "posts/test-published-post.md";
 
-    // Draft post should have HTML file
-    expect(existsSync("docs/2026-01-17-l-combinator.html")).toBe(true);
+  beforeEach(() => {
+    // Copy test fixtures to posts directory for integration testing
+    copyFileSync(DRAFT_FIXTURE, TEMP_DRAFT);
+    copyFileSync(PUBLISHED_FIXTURE, TEMP_PUBLISHED);
+
+    // Build with test fixtures
+    execSync("pnpm run build", { stdio: "inherit" });
+  });
+
+  afterEach(() => {
+    // Clean up temporary test posts
+    try {
+      if (existsSync(TEMP_DRAFT)) {
+        rmSync(TEMP_DRAFT);
+      }
+    } catch {
+      // File may have already been deleted
+    }
+
+    try {
+      if (existsSync(TEMP_PUBLISHED)) {
+        rmSync(TEMP_PUBLISHED);
+      }
+    } catch {
+      // File may have already been deleted
+    }
+
+    // Clean up generated HTML files
+    try {
+      if (existsSync("docs/test-draft-post.html")) {
+        rmSync("docs/test-draft-post.html");
+      }
+    } catch {
+      // File may have already been deleted
+    }
+
+    try {
+      if (existsSync("docs/test-published-post.html")) {
+        rmSync("docs/test-published-post.html");
+      }
+    } catch {
+      // File may have already been deleted
+    }
+  });
+
+  it("builds draft posts to HTML files", () => {
+    // Draft post should have HTML file (drafts are built, just not indexed)
+    expect(existsSync("docs/test-draft-post.html")).toBe(true);
   });
 
   it("excludes draft posts from index", () => {
     const indexHtml = readFileSync("docs/index.html", "utf-8");
 
-    // Non-draft post should be in index
-    expect(indexHtml).toContain("Hello World");
+    // Published post should be in index
+    expect(indexHtml).toContain("Test Published Post");
 
     // Draft post should NOT be in index
-    expect(indexHtml).not.toContain("L Combinator");
+    expect(indexHtml).not.toContain("Test Draft Post");
   });
 });
