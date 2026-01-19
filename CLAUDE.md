@@ -6,6 +6,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a minimal static blog generator built with TypeScript. It converts Markdown posts with YAML frontmatter into static HTML pages using a simple template system.
 
+## Documentation Maintenance
+
+When working on code changes, update documentation if ANY of these apply:
+
+- **New exported functions**: Document all exports in the "Exported Functions" section with signatures and descriptions
+- **New scripts/commands**: Update the "Build Commands" table in both CLAUDE.md and README.md
+- **New features**: Add architectural documentation to CLAUDE.md and user-facing docs to README.md
+- **Changed behavior**: Update existing sections rather than leaving them outdated
+- **New dependencies**: Document why they were added and how they're used (e.g., chokidar for file watching)
+
+Remove or update sections that become inaccurate after changes.
+
 ## Package Manager
 
 This project uses **pnpm** (not npm). All dependency operations should use pnpm:
