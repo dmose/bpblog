@@ -30,6 +30,24 @@ pnpm run build
 pnpm run serve
 ```
 
+## Development Mode
+
+For active development, use the dev mode which provides automatic rebuilding:
+
+```bash
+pnpm run dev
+```
+
+This starts a comprehensive development environment:
+
+- Watches for changes in `src/`, `posts/`, and `templates/` directories
+- Automatically recompiles TypeScript when source files change
+- Regenerates the site when posts or templates change
+- Serves the site at http://localhost:3000
+- Debounced rebuilds (300ms) to avoid excessive regeneration
+
+Press Ctrl+C to stop the dev server.
+
 ## Creating Posts
 
 Create a Markdown file in the `posts/` directory with YAML frontmatter:
@@ -62,17 +80,17 @@ The filename becomes the URL slug:
 
 ## Available Scripts
 
-| Command                 | Description                                 |
-| ----------------------- | ------------------------------------------- |
-| `pnpm run build`        | Compile TypeScript and generate static site |
-| `pnpm run dev`          | Watch mode for TypeScript compilation       |
-| `pnpm run serve`        | Serve `docs/` directory locally             |
-| `pnpm test`             | Run tests in watch mode                     |
-| `pnpm run test:run`     | Run tests once (CI mode)                    |
-| `pnpm run lint`         | Run oxlint on source files                  |
-| `pnpm run lint:fix`     | Run oxlint with auto-fix                    |
-| `pnpm run format`       | Format all files with Prettier              |
-| `pnpm run format:check` | Check if files are formatted                |
+| Command                 | Description                                                                 |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `pnpm run build`        | Compile TypeScript and generate static site                                 |
+| `pnpm run dev`          | Dev mode with file watching and auto-rebuild server (http://localhost:3000) |
+| `pnpm run serve`        | Serve `docs/` directory locally                                             |
+| `pnpm test`             | Run tests in watch mode                                                     |
+| `pnpm run test:run`     | Run tests once (CI mode)                                                    |
+| `pnpm run lint`         | Run oxlint on source files                                                  |
+| `pnpm run lint:fix`     | Run oxlint with auto-fix                                                    |
+| `pnpm run format`       | Format all files with Prettier                                              |
+| `pnpm run format:check` | Check if files are formatted                                                |
 
 ## Project Structure
 

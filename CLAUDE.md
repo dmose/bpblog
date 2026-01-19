@@ -17,7 +17,7 @@ This project uses **pnpm** (not npm). All dependency operations should use pnpm:
 ## Build Commands
 
 - `pnpm run build` - Compile TypeScript and generate static site (compiles to `dist/`, outputs to `docs/`)
-- `pnpm run dev` - Watch mode for TypeScript compilation (doesn't regenerate site)
+- `pnpm run dev` - Development mode with file watching, auto-rebuild, and local server (http://localhost:3000)
 - `pnpm run serve` - Serve the `docs/` directory locally for preview
 - `pnpm test` - Run tests in watch mode
 - `pnpm run test:run` - Run tests once (CI mode)
@@ -54,21 +54,37 @@ The build process is a single-file script that:
 
 The build script exports several functions for unit testing:
 
+- `build(): Promise<void>` - Main build function exported for programmatic use (used by dev mode)
 - `parsePost(filename: string, fileContent: string): Promise<Post | null>` - Parses a markdown file into a Post object
 - `filterPostsForIndex(posts: Post[]): Post[]` - Filters out drafts and sorts posts by date (newest first)
 - `buildPost(post: Post, template: string, outputDir?: string): Promise<void>` - Builds a single post HTML file with optional output directory
 
-### Directory Structure
+### Development Mode (src/dev.ts)
 
-- `src/build.ts` - Single-file build script
-- `test/` - Vitest test files for build logic
-- `posts/` - Markdown files with YAML frontmatter
-- `templates/` - HTML templates and CSS
-  - `index.html` - Homepage template
-  - `post.html` - Individual post template
-  - `styles.css` - Shared stylesheet
-- `docs/` - Generated output (GitHub Pages compatible)
-- `dist/` - Compiled TypeScript (intermediate build artifact)
+The dev mode provides a comprehensive development environment:
+
+1. **File Watching** using `chokidar` library
+   - Watches `src/` for TypeScript changes
+   - Watches `posts/` for Markdown changes
+   - Watches `templates/` for HTML/CSS changes
+   - Uses polling mode for reliable macOS compatibility
+
+2. **Auto-rebuild Pipeline**
+   - TypeScript recompilation when `.ts` files change
+   - Site regeneration when any watched files change
+   - Debounced rebuilds (300ms) to prevent excessive rebuilding
+   - Prevents concurrent builds with rebuild locking
+
+3. **Local Development Server**
+   - Automatically starts server at http://localhost:3000
+   - Serves the `docs/` directory
+   - Graceful shutdown on SIGINT/SIGTERM
+
+4. **Developer Experience**
+   - Single command starts entire dev environment
+   - Console output shows what's being watched
+   - Emoji indicators for build stages
+   - Error handling preserves dev mode on build failures
 
 ### Post Format
 
